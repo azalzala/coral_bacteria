@@ -17,6 +17,7 @@ install.packages("purrr")
 install.packages("tibble")
 install.packages("tidyr")
 install.packages("forcats")
+install.packages('metafor')
 
 # load packages
 library('BiocManager'); packageVersion("BiocManager")
@@ -32,4 +33,5 @@ library(purrr)
 library(tibble)
 library(tidyr)
 library(forcats)
+library(metafor)
 
