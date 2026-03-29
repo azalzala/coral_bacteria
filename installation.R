@@ -1,0 +1,35 @@
+# Install packages (lib = .libPaths()[1] if needed i.e. more than one exists)
+
+.libPaths()
+
+if(!requireNamespace('BiocManager')) 
+  install.packages('BiocManager', force=TRUE, lib = .libPaths()[1])
+packageVersion('BiocManager')
+BiocManager::install("decontam")
+# install ANCOMBC 
+BiocManager::install('ANCOMBC')
+install.packages('microbiome')
+BiocManager::install("dada2", version = "3.22")
+BiocManager::install("phyloseq")
+install.packages('dplyr')
+install.packages("ggplot")
+install.packages("purrr")
+install.packages("tibble")
+install.packages("tidyr")
+install.packages("forcats")
+
+# load packages
+library('BiocManager'); packageVersion("BiocManager")
+library(dada2); packageVersion("dada2")
+library(decontam); packageVersion("decontam")
+library(dplyr); packageVersion("dplyr")
+library("CVXR", lib.loc = .libPaths()[1])
+library(ANCOMBC); packageVersion("ANCOMBC")
+library(phyloseq); packageVersion("phyloseq")
+library(microbiome); packageVersion("microbiome")
+library(ggplot2)
+library(purrr)
+library(tibble)
+library(tidyr)
+library(forcats)
+
