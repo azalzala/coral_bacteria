@@ -352,7 +352,7 @@ meta_results <- lfc_filtered %>%
     rma(yi = lfc, sei = se, data = .x, method = "REML"),
     error = function(e) NULL
   ), .keep = TRUE) %>%
-  setNames(taxa_order)  # use group_keys() order, not unique()
+  setNames(taxa_order)  
 
 
 meta_summary <- imap_dfr(meta_results, function(m, taxon) {
