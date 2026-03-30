@@ -1,0 +1,50 @@
+import glob
+
+# Run as: snakemake --config study=study1
+configfile: f"configs/{config['study']}.yaml"
+
+STUDY       = config["study"]
+OUTPUT_DIR  = config["output_dir"]
+
+rule all:
+    input:
+        f"{OUTPUT_DIR}/phyloseq_object.rds"
+
+rule run_dada2:
+    input:
+        config["input_dir"]
+    output:
+        seqtab     = f"{OUTPUT_DIR}/seqtab_nochim.rds",
+        taxa       = f"{OUTPUT_DIR}/taxonomy.rds",     
+        qc_stats   = f"{OUTPUT_DIR}/qc_stats.tsv",
+        qc_plot    = f"{OUTPUT_DIR}/plots/quality_profile.pdf",
+        qc_filter_plot = f"{OUTPUT_DIR}/plots/filtered_quality_profile.pdf",
+        reads_plot = f"{OUTPUT_DIR}/plots/read_counts.pdf",
+        errF_plot  = f"{OUTPUT_DIR}/plots/errF.pdf",
+        errR_plot  = f"{OUTPUT_DIR}/plots/errR.pdf"
+    params:
+        truncLen = config["truncLen"],
+        trimLeft = config["trimLeft"],
+        min_len  = config["min_length"],
+        max_len  = config["max_length"],
+        silva_db  = config["silva_db"]   
+
+    log:
+        f"{OUTPUT_DIR}/logs/dada2.log"
+    script:
+        "scripts/dada2_pipeline.R"
+
+
+rule build_phyloseq:
+    input:
+        seqtab = f"{OUTPUT_DIR}/seqtab_nochim.rds",
+        taxa   = f"{OUTPUT_DIR}/taxonomy.rds",
+    output:
+        ps = f"{OUTPUT_DIR}/phyloseq_object.rds"
+    params:
+        metadata       = config["metadata"],
+        sample_id_col  = config["sample_id_col"]
+    log:
+        f"{OUTPUT_DIR}/logs/build_phyloseq.log"
+    script:
+        "scripts/build_phyloseq.R"
