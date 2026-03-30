@@ -22,7 +22,7 @@ rownames(taxa) <- colnames(asv_count)
 # Metadata rownames match asv_count rownames
 rownames(metadata) <- rownames(asv_count)
 
-# ── Dimension sanity checks ────────────────────────────────
+# verify dimensions match for merging
 stopifnot(
   "Taxa rows must equal ASV count columns" =
     ncol(asv_count) == nrow(taxa),
