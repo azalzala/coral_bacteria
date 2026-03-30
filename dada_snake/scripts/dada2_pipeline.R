@@ -1,8 +1,11 @@
+# Load packages ggplot2, dada2, dplyr and tidyr for EDA, plots and read processing
+
 library(dada2)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-# Snakemake passes params, input, output objects automatically
+
+# Objects from Snakemake parameters (rule run_dada2)
 input_dir <- snakemake@input[[1]]
 truncLen  <- as.integer(snakemake@params[["truncLen"]])
 trimLeft  <- as.integer(snakemake@params[["trimLeft"]])
@@ -24,18 +27,20 @@ log_con  <- file(log_file, open = "wt")
 sink(log_con, type = "output")
 sink(log_con, type = "message")
 
+# Write to log file stderr() outputs from script to validate runtime
+
 progress <- function(...) {
   msg <- paste0("[", format(Sys.time(), "%H:%M:%S"), "] ", ..., "\n")
   cat(msg, file = stderr())   # → visible in Snakemake terminal
   message(msg)                # → also captured in log file
 }
 
-# --- File discovery ---
+# First stage: Find the read files (raw paired-end)
 fnFs <- sort(list.files(input_dir, pattern = "_1.fastq", full.names = TRUE))
 fnRs <- sort(list.files(input_dir, pattern = "_2.fastq", full.names = TRUE))
 sample.names <- sub("_1.fastq", "", basename(fnFs))
 
-# Guard: stop early with a clear message if no files found
+# Warning for empty file list
 if (length(fnFs) == 0) {
   stop("No forward FASTQ files found in: ", input_dir,
        "\nCheck input_dir path and file naming pattern (_1.fastq.gz)")
@@ -43,13 +48,13 @@ if (length(fnFs) == 0) {
 
 message("Found ", length(fnFs), " samples: ", paste(sample.names, collapse = ", "))
 
-# --- Quality plots ---
+# Open plot generating pdf, and write first four quality control plots
 pdf(out_qcplot)
 plotQualityProfile(fnFs[1:min(4, length(fnFs))])
 plotQualityProfile(fnRs[1:min(4, length(fnRs))])
 dev.off()
 
-# --- Filter & trim ---
+# Filter and trim using config parameters
 filtFs <- file.path(input_dir, "filtered", paste0(sample.names, "_F_filt.fastq"))
 filtRs <- file.path(input_dir, "filtered", paste0(sample.names, "_R_filt.fastq"))
 
@@ -62,12 +67,13 @@ out <- filterAndTrim(
   compress = TRUE, multithread = TRUE
 )
 
+# Validate filter and trim choices with a post-filtered quality control plot
 pdf(out_qcplot_filtered)
 plotQualityProfile(filtFs[file.exists(filtFs)][1:min(4, length(filtFs[file.exists(filtFs)]))])
 plotQualityProfile(filtRs[file.exists(filtRs)][1:min(4, length(filtRs[file.exists(filtRs)]))])
 dev.off()
 
-# --- QC stats ---
+# Output read retention rates from pre- and post- filter and trim command
 qc_stats <- data.frame(
   sample   = sample.names,
   reads_in = out[, 1],
@@ -92,7 +98,8 @@ barplot(
 )
 dev.off()
 progress("Filtering complete — writing QC stats")
-# --- Learn errors ---
+
+# Stage 2: Learn errors
 errF <- learnErrors(filtFs, multithread = TRUE)
 errR <- learnErrors(filtRs, multithread = TRUE)
 progress("Error models learned (errF + errR)")
@@ -103,23 +110,24 @@ ggsave(out_errF_plot, plot = p_errF, width = 10, height = 8)
 p_errR <- plotErrors(errR, nominalQ = TRUE)
 ggsave(out_errR_plot, plot = p_errR, width = 10, height = 8)
 progress("Plots saved")
-# --- Denoise ---
+# Stage 3: Denoise
 dadaFs <- dada(filtFs, err = errF, multithread = TRUE)
 dadaRs <- dada(filtRs, err = errR, multithread = TRUE)
 progress("Denoising complete")
-# --- Merge ---
+
+# Stage 4: Merge pairs
 mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose = TRUE)
 progress("Mergers complete")
 
-# --- Seqtab ---
+# Stage 5: Make seqtab
 seqtab <- makeSequenceTable(mergers)
 progress("Seqtab ready")
 
-# --- Remove chimeras ---
+# Stage 6: Remove chimeras
 seqtab.nochim <- removeBimeraDenovo(seqtab, method = "consensus", multithread = TRUE)
 progress("Removed chimeras")
 
-# --- Subset by amplicon length ---
+# Stage 7: Select reads based on length from read distribution
 seq_lengths <- nchar(colnames(seqtab.nochim))
 seqtab.nochim <- seqtab.nochim[, seq_lengths >= min_len & seq_lengths <= max_len]
 progress("Subsetting complete")
@@ -135,9 +143,10 @@ if (ncol(seqtab.nochim) == 0) {
     "Widen min_length/max_length in your YAML config."
   )
 }
-
+# output the number of reads passed with stderr()
 cat("[INFO] ", ncol(seqtab.nochim), " ASVs passed length filter\n", file = stderr())
-    
+
+#Stage 8: Assign taxonomy and save RDS
 taxa <- assignTaxonomy(seqtab.nochim, snakemake@params[["silva_db"]], multithread = TRUE)
 saveRDS(taxa, snakemake@output[["taxa"]])
 progress("Taxonomy assigned and RDS saved")
