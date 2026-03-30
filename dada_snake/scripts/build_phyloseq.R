@@ -4,21 +4,22 @@ log_con <- file(snakemake@log[[1]], open = "wt")
 sink(log_con, type = "output")
 sink(log_con, type = "message")
 
-# ── Load inputs ────────────────────────────────────────────
+#Load inputs
 asv_count <- readRDS(snakemake@input[["seqtab"]])
 taxa      <- readRDS(snakemake@input[["taxa"]])
 metadata  <- read.csv(snakemake@params[["metadata"]], check.names = FALSE)
 
+# Confirm dims for objects 
 message("Dimensions on load:")
 message("  asv_count: ", paste(dim(asv_count), collapse = " x "))
 message("  taxa:      ", paste(dim(taxa),      collapse = " x "))
 message("  metadata:  ", paste(dim(metadata),  collapse = " x "))
 
-# ── Fix rownames ───────────────────────────────────────────
-# Taxa rownames must match asv_count column names (ASV sequences)
+# Match rownames to run_SRR names
+# Taxa rownames match asv_count column names (ASV sequences)
 rownames(taxa) <- colnames(asv_count)
 
-# Metadata rownames must be sample IDs matching asv_count rownames
+# Metadata rownames match asv_count rownames
 rownames(metadata) <- rownames(asv_count)
 
 # ── Dimension sanity checks ────────────────────────────────
@@ -29,15 +30,12 @@ stopifnot(
     nrow(asv_count) == nrow(metadata)
 )
 
-# ── Reorder metadata to match asv_count sample order ──────
-metadata <- metadata[rownames(asv_count), , drop = FALSE]
-
-# ── Build phyloseq components ──────────────────────────────
+# Phyloseq build
 otu_ps <- otu_table(asv_count, taxa_are_rows = FALSE)
 tax_ps <- tax_table(as.matrix(taxa))
 smd_ps <- sample_data(metadata)
 
-# ── Name alignment checks ──────────────────────────────────
+# Validate dimensions and rownames (SRR accessions) before phyloseq
 message("taxa_names match (otu vs tax): ",
         identical(taxa_names(otu_ps), taxa_names(tax_ps)))
 
@@ -54,12 +52,13 @@ if (!identical(sample_names(otu_ps), sample_names(smd_ps))) {
        "Check that rownames(metadata) <- metadata$run_SRR matches rownames(asv_count).")
 }
 
-# ── Build phyloseq object ──────────────────────────────────
+#Phyloseq
 ps <- phyloseq(otu_ps, tax_ps, smd_ps)
 
 message("Phyloseq object built successfully:")
 print(ps)
 
+# save phyloseq
 saveRDS(ps, snakemake@output[["ps"]])
 
 sink(type = "message")
