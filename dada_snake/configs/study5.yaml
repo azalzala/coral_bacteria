@@ -1,0 +1,23 @@
+study: "study5"
+input_dir: "/shared/team/people/aya/sra/PRJNA1050834/subset/"
+output_dir: "/shared/team/people/aya/sra/dada_snake/results/study5"
+
+# DADA2 parameters
+truncLen: [250, 220]
+trimLeft: 10
+
+# seqtab.nochim subsetting
+min_length: 250
+max_length: 300
+
+# Quality check thresholds (for checkpoint step)
+min_reads_per_sample: 1000
+
+# taxonomy classification dataset for dada2 
+silva_db: "/shared/team/people/aya/sra/silva_nr99_v138.1_train_set.fa"
+
+# Metadata and column for IDs
+metadata:      "/shared/team/people/aya/sra/PRJNA1211024/metadata.csv"
+sample_id_col: "run_SRR"   # column used for rownames(metadata)
+
+threads: 8
