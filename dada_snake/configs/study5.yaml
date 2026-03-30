@@ -17,7 +17,7 @@ min_reads_per_sample: 1000
 silva_db: "/shared/team/people/aya/sra/silva_nr99_v138.1_train_set.fa"
 
 # Metadata and column for IDs
-metadata:      "/shared/team/people/aya/sra/PRJNA1211024/metadata.csv"
+metadata:      "/shared/team/people/aya/sra/"
 sample_id_col: "run_SRR"   # column used for rownames(metadata)
 
 threads: 8
