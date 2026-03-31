@@ -1,0 +1,8 @@
+R v4.5.3
+BiocManager v1.30.27
+dada2 v3.22
+Phyloseq v1.54.2
+ANCOMBC v2.12.0
+Microbiome v1.32.0
+dplyr v1.2.0
+decontam v1.30.0
