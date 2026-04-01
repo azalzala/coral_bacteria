@@ -10,8 +10,8 @@ truncLen: [250, 250]
 trimLeft: [15, 15]
 
 # seqtab.nochim subsetting
-min_length: 350
-max_length: 450
+min_length: 0
+max_length: 500
 
 # quality check thresholds (for checkpoint step)
 min_reads_per_sample: 1000
