@@ -124,7 +124,7 @@ seqtab <- makeSequenceTable(mergers)
 progress("Seqtab ready")
 
 # Stage 6: Remove chimeras
-seqtab.nochim <- removeBimeraDenovo(seqtab, method = "consensus", multithread = TRUE)
+seqtab.nochim <- seqtab.nochim[, seq_lengths >= min_len & seq_lengths <= max_len, drop = FALSE]
 progress("Removed chimeras")
 
 # Stage 7: Select reads based on length from read distribution
